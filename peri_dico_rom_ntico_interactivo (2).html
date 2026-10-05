@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edición Especial - Juegos de Sociedad y Entretenimiento</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Special+Elite&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        paper: '#f8f6f0',
+                        'paper-dark': '#eee9dc',
+                        ink: '#1a1a1a',
+                        'ink-muted': '#4a4a4a',
+                        accent: '#8b0000',
+                    },
+                    fontFamily: {
+                        title: ['"Playfair Display"', 'serif'],
+                        newspaper: ['"Newsreader"', 'serif'],
+                        typewriter: ['"Special Elite"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #e5e0d8;
+            background-image: radial-gradient(#d5cfc4 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #1a1a1a;
+            font-family: 'Newsreader', serif;
+        }
+
+        .double-line-top {
+            border-top: 4px double #1a1a1a;
+        }
+
+        .double-line-bottom {
+            border-bottom: 4px double #1a1a1a;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #eee9dc;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1a1a1a;
+        }
+
+        .ws-cell {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        .ws-cell.selected {
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
+            border-radius: 4px;
+        }
+        .ws-cell.found {
+            background-color: #8b0000 !important;
+            color: #ffffff !important;
+            border-radius: 4px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .page-container {
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
+
+        .cw-input {
+            text-transform: uppercase;
+            text-align: center;
+            font-family: 'Special Elite', monospace;
+            font-weight: bold;
+        }
+
+        #mazeCanvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="p-2 sm:p-4 md:p-8 min-h-screen flex flex-col items-center justify-start">
+
+    <!-- Action Bar for User -->
+    <div class="no-print w-full max-w-4xl mb-4 bg-paper-dark p-3 rounded-lg border border-gray-400 shadow-md flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-newspaper text-xl text-ink"></i>
+            <span class="font-bold text-sm sm:text-base font-title">Edición Interactiva</span>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs sm:text-sm">
+            <button onclick="checkAllAnswers()" class="px-3 py-1.5 bg-ink text-paper rounded hover:bg-opacity-80 transition flex items-center gap-1 font-bold">
+                <i class="fa-solid fa-check"></i> Verificar Juegos
+            </button>
+            <button onclick="resetAll()" class="px-3 py-1.5 bg-gray-200 text-ink border border-ink rounded hover:bg-gray-300 transition flex items-center gap-1">
+                <i class="fa-solid fa-rotate-left"></i> Reiniciar
+            </button>
+            <button onclick="window.print()" class="px-3 py-1.5 bg-accent text-white rounded hover:bg-red-900 transition flex items-center gap-1 font-bold">
+                <i class="fa-solid fa-print"></i> Guardar / Imprimir
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN NEWSPAPER CONTAINER -->
+    <div class="page-container w-full max-w-4xl bg-paper p-4 sm:p-8 md:p-10 shadow-2xl border border-gray-400 relative text-ink">
+
+        <!-- Top Classified Ads Section -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs border-b border-ink pb-3 mb-4 font-newspaper">
+            <div class="border-r border-gray-300 pr-2">
+                <p class="font-bold uppercase">Ubicación: Bogotá Norte</p>
+                <p>Precio: $210.000.000</p>
+                <p>Tel: 320 778 1290</p>
+                <div class="bg-ink text-paper text-center font-bold px-1 my-1">VIAJES</div>
+                <p class="font-bold">ESCAPADA ROMÁNTICA</p>
+                <p>3 días, 2 noches.</p>
+            </div>
+            <div class="border-r border-gray-300 pr-2">
+                <p class="font-bold">SUV aventura</p>
+                <p>Para carretera, campo y planes improvisados.</p>
+                <p>Precio: $52.000.000</p>
+                <p>Tel: 318 556 7782</p>
+            </div>
+            <div class="border-r border-gray-300 pr-2">
+                <p class="font-bold">Oferta especial</p>
+                <p>Amor real, sin condiciones.</p>
+                <p>Disponible ahora.</p>
+                <p class="mt-2 font-bold">Promoción</p>
+                <p>Dos personas, una historia.</p>
+                <p>Incluye todo lo que venga.</p>
+            </div>
+            <div class="bg-paper-dark p-2 border border-dashed border-ink flex flex-col justify-between items-center text-center">
+                <div class="text-xs font-bold uppercase"><i class="fa-solid fa-ticket"></i> LUGAR FAVORITO</div>
+                <p class="text-[10px] leading-tight mt-1">Redímelos, llamando a Serete en su lista de contactos y de este</p>
+                <p class="font-typewriter font-bold bg-white px-2 py-0.5 border border-ink mt-1">CÓDIGO: 73 4M0</p>
+            </div>
+        </div>
+
+        <!-- Newspaper Title Header -->
+        <header class="text-center my-4">
+            <div class="flex justify-between items-center text-xs sm:text-sm font-semibold border-b border-ink pb-1 mb-2">
+                <span>Bogotá, Colombia</span>
+                <span class="font-title tracking-widest text-sm sm:text-lg">PERIÓDICO EDICIÓN ESPECIAL</span>
+                <span>18 de Abril</span>
+            </div>
+            <h1 class="text-3xl sm:text-5xl md:text-6xl font-black font-title tracking-tight my-2 uppercase border-b-2 border-ink pb-2">
+                Juegos de sociedad y entretenimiento
+            </h1>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 my-6">
+
+            <!-- LEFT COLUMN (Quiz & Crossword) -->
+            <div class="md:col-span-6 space-y-6 md:border-r md:border-ink md:pr-6">
+                
+                <!-- QUIZ SECTION -->
+                <div class="border-b border-gray-400 pb-6">
+                    <h2 class="text-xl font-bold font-title italic mb-3 flex items-center gap-2">
+                        <i class="fa-regular fa-heart"></i> ¿Estás viviendo un amor como este?
+                    </h2>
+                    
+                    <form id="loveQuiz" class="space-y-4 text-sm font-newspaper">
+                        <div>
+                            <p class="font-semibold mb-1">1. Piensas en esa persona incluso cuando no estás con ella</p>
+                            <div class="flex flex-wrap gap-4 pl-2">
+                                <label class="inline-flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="q1" value="si" class="accent-black"> Sí
+                                </label>
+                                <label class="inline-flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="q1" value="obvio" class="accent-black"> Obvio
+                                </label>
+                                <label class="inline-flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="q1" value="todo" class="accent-black"> Todo el tiempo
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="font-semibold mb-1">2. No necesitas explicarlo para sentir que es real</p>
+                            <div class="flex flex-wrap gap-4 pl-2">
+                                <label class="inline-flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="q2" value="si" class="accent-black"> Sí
+                                </label>
+                                <label class="inline-flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="q2" value="demasiado" class="accent-black"> Demasiado
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="font-semibold mb-1">3. No es perfecto... pero lo eliges igual</p>
+                            <div class="flex flex-wrap gap-4 pl-2">
+                                <label class="inline-flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="q3" value="si" class="accent-black"> Sí
+                                </label>
+                                <label class="inline-flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="q3" value="siempre" class="accent-black"> Siempre
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="font-semibold mb-1">4. Sientes calma además de emoción</p>
+                            <div class="flex flex-wrap gap-4 pl-2">
+                                <label class="inline-flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="q4" value="si" class="accent-black"> Sí
+                                </label>
+                                <label class="inline-flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="q4" value="mucha" class="accent-black"> Mucha
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- CROSSWORD SECTION -->
+                <div class="space-y-4">
+                    <h3 class="font-title font-bold text-lg uppercase border-b border-ink pb-1">Palabras Cruzadas</h3>
+                    
+                    <div class="flex justify-center my-4 overflow-x-auto p-2">
+                        <div id="crosswordGrid" class="grid grid-cols-10 gap-1 bg-ink p-1 rounded border border-ink text-xs">
+                            <!-- JS Generated Grid -->
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-newspaper">
+                        <div>
+                            <h4 class="font-bold border-b border-ink mb-1">Abajo:</h4>
+                            <ol class="list-decimal pl-4 space-y-1">
+                                <li>Huelen bien, se ven hermosas, son como tú, pero me encanta regalártelas.</li>
+                                <li>Mi apodo para ti, empieza con Q.</li>
+                                <li>Tu bebé.</li>
+                                <li>Tus mascotas soñadas.</li>
+                            </ol>
+                        </div>
+                        <div>
+                            <h4 class="font-bold border-b border-ink mb-1">Horizontalmente:</h4>
+                            <ol class="list-decimal pl-4 space-y-1" start="3">
+                                <li>¿Cómo se dice "No" en modo consentida?</li>
+                                <li value="6">Tu comida favorita.</li>
+                                <li>No tú... no tú... no tú...</li>
+                                <li>¿Lo haces por qué me ...?</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN (Word Search & Horoscopo) -->
+            <div class="md:col-span-6 space-y-6">
+
+                <!-- WORD SEARCH SECTION -->
+                <div>
+                    <div class="flex justify-between items-center border-b border-ink pb-1 mb-2">
+                        <h3 class="font-title font-bold text-lg uppercase">Sopa de Letras</h3>
+                        <span class="text-xs font-bold bg-ink text-paper px-2 py-0.5" id="wsProgress">0 / 13</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        <!-- Grid Matrix -->
+                        <div class="sm:col-span-8 flex justify-center">
+                            <div id="wordSearchGrid" class="grid grid-cols-12 gap-1 select-none font-typewriter text-xs font-bold">
+                                <!-- JS Generated Word Search -->
+                            </div>
+                        </div>
+                        <!-- Word List -->
+                        <div class="sm:col-span-4 text-xs font-typewriter space-y-1 bg-paper-dark p-2 border border-ink rounded">
+                            <p class="font-bold text-center border-b border-ink pb-1 mb-1">PALABRAS:</p>
+                            <div id="wordList" class="grid grid-cols-2 sm:grid-cols-1 gap-1">
+                                <!-- JS Populated -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÑALES DE QUE ES REAL & HORÓSCOPO -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-ink pt-4">
+                    <div class="bg-paper-dark p-3 border border-ink rounded">
+                        <h4 class="font-title font-bold uppercase text-sm border-b border-ink pb-1 mb-2">"Señales de que es real"</h4>
+                        <ul class="text-xs space-y-1 italic font-newspaper">
+                            <li>• No te da ansiedad, te da tranquilidad</li>
+                            <li>• No te confunde, te aclara</li>
+                            <li>• No te drena, te sostiene</li>
+                            <li>• No te obliga, te elige</li>
+                        </ul>
+                    </div>
+
+                    <div class="border border-ink p-3 rounded">
+                        <h4 class="font-title font-bold uppercase text-sm border-b border-ink pb-1 mb-1">Horóscopo del Amor</h4>
+                        <div class="text-xs space-y-1 font-newspaper">
+                            <p><strong>Signo:</strong> Nosotras</p>
+                            <p><strong>Hoy:</strong> Se confirma lo que ya sabías</p>
+                            <p><strong>Energía:</strong> Tranquila pero intensa</p>
+                            <p><strong>Consejo:</strong> No lo pienses tanto</p>
+                            <p class="font-bold text-accent">Resultado: Enamoradas</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- MIDDLE SECTION (Diferencias, Sudoku, Heart Maze) -->
+        <div class="double-line-top double-line-bottom py-6 my-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+
+            <!-- Spot the 6 Differences (Imagen 3) -->
+            <div class="md:col-span-6 space-y-2">
+                <div class="flex justify-between items-center border-b border-ink pb-1">
+                    <h3 class="font-title font-bold text-base sm:text-lg uppercase">Encuentra las 6 diferencias</h3>
+                    <span class="text-xs font-bold bg-ink text-paper px-2 py-0.5" id="diffCounter">0 / 6 Encontradas</span>
+                </div>
+                <p class="text-xs italic">Haz clic en las diferencias en la imagen de la derecha:</p>
+                
+                <div class="relative bg-white border border-ink p-1 rounded overflow-hidden select-none" id="diffContainer">
+                    <img src="Captura de pantalla 2026-10-04 211747.png" alt="6 Diferencias" class="w-full h-auto block" id="diffImage">
+                    
+                    <!-- Interactive Hotspots for the 6 Differences -->
+                    <div onclick="foundDiff(0, this)" class="absolute top-[10%] right-[3%] w-[12%] h-[15%] rounded-full cursor-pointer hover:bg-red-500/20"></div>
+                    <div onclick="foundDiff(1, this)" class="absolute top-[45%] right-[22%] w-[10%] h-[15%] rounded-full cursor-pointer hover:bg-red-500/20"></div>
+                    <div onclick="foundDiff(2, this)" class="absolute bottom-[10%] right-[32%] w-[12%] h-[15%] rounded-full cursor-pointer hover:bg-red-500/20"></div>
+                    <div onclick="foundDiff(3, this)" class="absolute bottom-[8%] right-[8%] w-[10%] h-[20%] rounded-full cursor-pointer hover:bg-red-500/20"></div>
+                    <div onclick="foundDiff(4, this)" class="absolute top-[50%] right-[4%] w-[12%] h-[12%] rounded-full cursor-pointer hover:bg-red-500/20"></div>
+                    <div onclick="foundDiff(5, this)" class="absolute bottom-[20%] right-[48%] w-[10%] h-[12%] rounded-full cursor-pointer hover:bg-red-500/20"></div>
+                </div>
+
+                <!-- Mini Sudoku -->
+                <div class="pt-2">
+                    <h4 class="font-title font-bold text-sm uppercase border-b border-ink pb-1 mb-2">Sudoku del Amor</h4>
+                    <div class="flex justify-center">
+                        <div id="sudokuGrid" class="grid grid-cols-4 gap-1 bg-ink p-1 rounded font-typewriter">
+                            <!-- JS Populated Mini Sudoku -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heart Maze (Imagen 5) -->
+            <div class="md:col-span-6 space-y-2">
+                <div class="flex justify-between items-center border-b border-ink pb-1">
+                    <h3 class="font-title font-bold text-base sm:text-lg uppercase">Laberinto al Corazón</h3>
+                    <div class="flex gap-1">
+                        <button onclick="clearMaze()" class="text-[10px] bg-gray-200 border border-ink px-2 py-0.5 rounded hover:bg-gray-300">Limpiar</button>
+                        <button onclick="revealMazeSolution()" class="text-[10px] bg-accent text-white px-2 py-0.5 rounded hover:bg-red-900">Solución</button>
+                    </div>
+                </div>
+                
+                <div class="relative bg-white border border-ink rounded p-1 flex justify-center items-center overflow-hidden">
+                    <canvas id="mazeCanvas" width="400" height="320" class="cursor-crosshair w-full h-auto"></canvas>
+                </div>
+                <p class="text-[10px] text-center italic">Encuentra el camino desde la entrada **A** atravesando el laberinto hasta llegar a la salida **C**.</p>
+            </div>
+
+        </div>
+
+        <!-- BOTTOM SECTION (Estereograma & Preguntas del Amor) -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 my-6">
+
+            <!-- Estereograma (Imagen 4) -->
+            <div class="md:col-span-5 space-y-3">
+                <h3 class="font-title font-bold text-base uppercase border-b border-ink pb-1">
+                    ¿LO VES? ESTEREOGRAMA DEL AMOR
+                </h3>
+                <div class="relative bg-neutral-900 border border-ink p-2 rounded text-center overflow-hidden">
+                    <div class="relative w-full h-52 overflow-hidden rounded">
+                        <img src="Captura de pantalla 2026-10-04 211739.jpg" alt="Estereograma" class="w-full h-full object-cover">
+                    </div>
+                    
+                    <button onclick="toggleStereogram(this)" class="mt-2 w-full text-xs font-bold bg-paper text-ink border border-ink py-1 rounded hover:bg-paper-dark transition">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Revelar Secreto 3D
+                    </button>
+                    <div id="stereogramAnswer" class="hidden text-xs font-bold text-accent mt-2 p-2 bg-paper rounded border border-accent">
+                        ❤️ ¡Mensaje Revelado: "TE AMO PARA SIEMPRE"! ❤️
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preguntas del Amor (Interactive Form) -->
+            <div class="md:col-span-7 space-y-4">
+                <h3 class="font-title font-bold text-lg uppercase border-b border-ink pb-1">
+                    Preguntas del Amor
+                </h3>
+                <p class="text-xs italic font-newspaper">
+                    Responde a mano estas preguntas especiales. Al terminar, puedes guardar e imprimir esta edición.
+                </p>
+
+                <div class="space-y-3 font-newspaper text-xs">
+                    <div>
+                        <label class="font-bold block mb-1">1. ¿En qué momento te diste cuenta de que querías estar conmigo?</label>
+                        <textarea class="w-full bg-paper-dark border-b border-ink p-2 focus:outline-none focus:bg-white resize-none font-typewriter text-sm rounded" rows="2" placeholder="Escribe aquí tu respuesta..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="font-bold block mb-1">2. ¿Qué es lo que más te gusta de nosotras?</label>
+                        <textarea class="w-full bg-paper-dark border-b border-ink p-2 focus:outline-none focus:bg-white resize-none font-typewriter text-sm rounded" rows="2" placeholder="Escribe aquí tu respuesta..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="font-bold block mb-1">3. ¿Cómo se siente estar conmigo?</label>
+                        <textarea class="w-full bg-paper-dark border-b border-ink p-2 focus:outline-none focus:bg-white resize-none font-typewriter text-sm rounded" rows="2" placeholder="Escribe aquí tu respuesta..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="font-bold block mb-1">4. ¿Qué parte de esto te hace feliz de verdad?</label>
+                        <textarea class="w-full bg-paper-dark border-b border-ink p-2 focus:outline-none focus:bg-white resize-none font-typewriter text-sm rounded" rows="2" placeholder="Escribe aquí tu respuesta..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="font-bold block mb-1">5. ¿Qué te da calma de estar juntas?</label>
+                        <textarea class="w-full bg-paper-dark border-b border-ink p-2 focus:outline-none focus:bg-white resize-none font-typewriter text-sm rounded" rows="2" placeholder="Escribe aquí tu respuesta..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="font-bold block mb-1">6. ¿Qué significa para ti elegirnos?</label>
+                        <textarea class="w-full bg-paper-dark border-b border-ink p-2 focus:outline-none focus:bg-white resize-none font-typewriter text-sm rounded" rows="2" placeholder="Escribe aquí tu respuesta..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="font-bold block mb-1">7. ¿Qué es lo que más valoras de lo que estamos construyendo?</label>
+                        <textarea class="w-full bg-paper-dark border-b border-ink p-2 focus:outline-none focus:bg-white resize-none font-typewriter text-sm rounded" rows="2" placeholder="Escribe aquí tu respuesta..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="font-bold block mb-1">8. ¿Qué quieres que cuidemos siempre?</label>
+                        <textarea class="w-full bg-paper-dark border-b border-ink p-2 focus:outline-none focus:bg-white resize-none font-typewriter text-sm rounded" rows="2" placeholder="Escribe aquí tu respuesta..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="font-bold block mb-1">9. ¿Qué te hace sentir segura conmigo?</label>
+                        <textarea class="w-full bg-paper-dark border-b border-ink p-2 focus:outline-none focus:bg-white resize-none font-typewriter text-sm rounded" rows="2" placeholder="Escribe aquí tu respuesta..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-8 border-t-2 border-ink pt-3 flex flex-wrap justify-between items-center text-xs font-title font-bold">
+            <span>@Destino_love.com</span>
+            <span class="text-accent italic"><i class="fa-solid fa-heart"></i> Edición Hecha con Amor</span>
+            <span>www.destino_love.com</span>
+        </footer>
+
+    </div>
+
+    <script>
+        const crosswordAnswers = {
+            '1': { word: 'FLORES', row: 0, col: 4, dir: 'down' },
+            '2': { word: 'QUEQUE', row: 0, col: 8, dir: 'down' },
+            '4': { word: 'SERETE', row: 3, col: 5, dir: 'down' },
+            '5': { word: 'PERROS', row: 4, col: 7, dir: 'down' },
+            '3': { word: 'NUP', row: 3, col: 0, dir: 'across' },
+            '6': { word: 'HAMBURGUESA', row: 6, col: 0, dir: 'across' },
+            '7': { word: 'YO', row: 8, col: 0, dir: 'across' },
+            '8': { word: 'AMAS', row: 8, col: 5, dir: 'across' }
+        };
+
+        function initCrossword() {
+            const grid = document.getElementById('crosswordGrid');
+            grid.innerHTML = '';
+            
+            for (let r = 0; r < 10; r++) {
+                for (let c = 0; c < 10; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'w-7 h-7 bg-paper-dark border border-gray-400 flex items-center justify-center relative';
+                    
+                    let isActive = false;
+                    let numberLabel = null;
+
+                    for (const [num, info] of Object.entries(crosswordAnswers)) {
+                        const len = info.word.length;
+                        if (info.dir === 'across' && r === info.row && c >= info.col && c < info.col + len) {
+                            isActive = true;
+                            if (c === info.col) numberLabel = num;
+                        }
+                        if (info.dir === 'down' && c === info.col && r >= info.row && r < info.row + len) {
+                            isActive = true;
+                            if (r === info.row) numberLabel = num;
+                        }
+                    }
+
+                    if (isActive) {
+                        cell.className = 'w-7 h-7 bg-white border border-ink flex items-center justify-center relative';
+                        if (numberLabel) {
+                            const label = document.createElement('span');
+                            label.className = 'absolute top-0.5 left-0.5 text-[8px] font-bold text-gray-600 leading-none';
+                            label.innerText = numberLabel;
+                            cell.appendChild(label);
+                        }
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.maxLength = 1;
+                        input.className = 'cw-input w-full h-full text-center bg-transparent focus:bg-yellow-100 focus:outline-none text-sm font-bold';
+                        cell.appendChild(input);
+                    } else {
+                        cell.className = 'w-7 h-7 bg-ink/90 border border-ink';
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        const wordSearchMatrix = [
+            ['U','O','Q','C','O','S','S','M','V','F','F','D'],
+            ['N','P','R','T','Í','L','A','E','R','Q','B','H'],
+            ['G','Y','I','E','O','N','I','T','S','E','D','J'],
+            ['C','R','G','K','O','Y','S','A','N','W','T','N'],
+            ['V','A','E','O','Q','I','R','N','Y','U','R','O'],
+            ['L','A','L','Q','E','T','W','E','L','X','J','E'],
+            ['P','M','E','M','O','C','I','O','N','E','S','E'],
+            ['Q','O','P','S','A','E','C','S','D','D','V','B'],
+            ['U','R','O','D','I','N','E','V','N','E','I','B'],
+            ['E','N','A','M','O','R','A','D','A','S','W','D'],
+            ['Q','G','Z','C','U','N','Y','R','L','O','Y','S'],
+            ['R','Y','F','B','P','N','G','E','U','A','Q','W']
+        ];
+
+        const targetWords = [
+            "NOSOTRAS", "BIENVENIDO", "ENAMORADAS", "EMOCIONES", 
+            "SIEMPRE", "DESTINO", "JUNTAS", "ELEGIR", 
+            "REAL", "CALMA", "AMOR", "SÍ", "TÚ"
+        ];
+
+        let foundWords = new Set();
+        let selectedCells = [];
+        let isSelectingWS = false;
+
+        function initWordSearch() {
+            const grid = document.getElementById('wordSearchGrid');
+            const list = document.getElementById('wordList');
+            grid.innerHTML = '';
+            list.innerHTML = '';
+
+            targetWords.forEach(word => {
+                const item = document.createElement('div');
+                item.id = `word-${word}`;
+                item.className = 'text-[11px] font-bold text-gray-700 transition flex items-center justify-between';
+                item.innerHTML = `<span>• ${word}</span><i class="fa-solid fa-check text-xs text-transparent transition-colors"></i>`;
+                list.appendChild(item);
+            });
+
+            for (let r = 0; r < wordSearchMatrix.length; r++) {
+                for (let c = 0; c < wordSearchMatrix[r].length; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'ws-cell w-5 h-5 sm:w-6 sm:h-6 border border-gray-300 flex items-center justify-center cursor-pointer font-bold text-[11px] select-none';
+                    cell.innerText = wordSearchMatrix[r][c];
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+
+                    cell.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        isSelectingWS = true;
+                        clearUnfoundWSSelection();
+                        addWSCell(cell, r, c);
+                    });
+
+                    cell.addEventListener('mouseenter', () => {
+                        if (isSelectingWS) {
+                            addWSCell(cell, r, c);
+                        }
+                    });
+
+                    grid.appendChild(cell);
+                }
+            }
+
+            document.addEventListener('mouseup', () => {
+                if (isSelectingWS) {
+                    isSelectingWS = false;
+                    checkWordSearchSelection();
+                }
+            });
+
+            grid.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (target && target.classList.contains('ws-cell')) {
+                    const r = parseInt(target.dataset.r);
+                    const c = parseInt(target.dataset.c);
+                    if (!isSelectingWS) {
+                        isSelectingWS = true;
+                        clearUnfoundWSSelection();
+                    }
+                    addWSCell(target, r, c);
+                }
+            });
+
+            grid.addEventListener('touchend', () => {
+                if (isSelectingWS) {
+                    isSelectingWS = false;
+                    checkWordSearchSelection();
+                }
+            });
+        }
+
+        function addWSCell(cell, r, c) {
+            if (cell.classList.contains('found')) return;
+            if (!selectedCells.some(item => item.cell === cell)) {
+                cell.classList.add('selected');
+                selectedCells.push({ cell, letter: cell.innerText, r, c });
+            }
+        }
+
+        function clearUnfoundWSSelection() {
+            selectedCells.forEach(item => {
+                if (!item.cell.classList.contains('found')) {
+                    item.cell.classList.remove('selected');
+                }
+            });
+            selectedCells = [];
+        }
+
+        function checkWordSearchSelection() {
+            const currentStr = selectedCells.map(i => i.letter).join('');
+            const reversedStr = currentStr.split('').reverse().join('');
+
+            let matchedWord = null;
+
+            targetWords.forEach(word => {
+                const normalizedWord = word.replace('Í', 'I').replace('Í', 'I');
+                if (!foundWords.has(word) && (currentStr === word || reversedStr === word || currentStr === normalizedWord || reversedStr === normalizedWord)) {
+                    matchedWord = word;
+                }
+            });
+
+            if (matchedWord) {
+                foundWords.add(matchedWord);
+                selectedCells.forEach(item => {
+                    item.cell.classList.remove('selected');
+                    item.cell.classList.add('found');
+                });
+                
+                const wordEl = document.getElementById(`word-${matchedWord}`);
+                if (wordEl) {
+                    wordEl.classList.add('line-through', 'text-accent', 'opacity-70');
+                    const icon = wordEl.querySelector('i');
+                    if (icon) icon.classList.replace('text-transparent', 'text-accent');
+                }
+                
+                document.getElementById('wsProgress').innerText = `${foundWords.size} / ${targetWords.length}`;
+            } else {
+                clearUnfoundWSSelection();
+            }
+            selectedCells = [];
+        }
+
+        let foundDiffsCount = 0;
+        const diffsFound = [false, false, false, false, false, false];
+
+        function foundDiff(index, el) {
+            if (!diffsFound[index]) {
+                diffsFound[index] = true;
+                foundDiffsCount++;
+                el.style.border = "2px solid #8b0000";
+                el.style.backgroundColor = "rgba(139, 0, 0, 0.3)";
+                document.getElementById('diffCounter').innerText = `${foundDiffsCount} / 6 Encontradas`;
+
+                if (foundDiffsCount === 6) {
+                    alert("¡Felicidades! Encontraste las 6 diferencias ❤️");
+                }
+            }
+        }
+
+        const sudokuInitial = [
+            [0, 2, 3, 0],
+            [3, 0, 0, 1],
+            [0, 1, 4, 0],
+            [4, 0, 0, 2]
+        ];
+
+        function initSudoku() {
+            const grid = document.getElementById('sudokuGrid');
+            grid.innerHTML = '';
+
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const cellVal = sudokuInitial[r][c];
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = '1';
+                    input.max = '4';
+                    input.className = 'w-8 h-8 text-center font-bold text-sm border border-gray-400 focus:outline-none focus:bg-yellow-100';
+
+                    if (cellVal !== 0) {
+                        input.value = cellVal;
+                        input.disabled = true;
+                        input.className += ' bg-paper-dark text-ink';
+                    } else {
+                        input.className += ' bg-white text-accent';
+                    }
+
+                    grid.appendChild(input);
+                }
+            }
+        }
+
+        let canvas, ctx, isMazeDrawing = false;
+        let mazeImg = new Image();
+
+        function initHeartMaze() {
+            canvas = document.getElementById('mazeCanvas');
+            ctx = canvas.getContext('2d');
+            mazeImg.src = 'Captura de pantalla 2026-10-04 211720.png';
+
+            mazeImg.onload = function() {
+                drawMaze();
+            };
+
+            canvas.addEventListener('mousedown', (e) => {
+                isMazeDrawing = true;
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                ctx.beginPath();
+                ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isMazeDrawing) return;
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#8b0000';
+                ctx.lineCap = 'round';
+                ctx.lineTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
+                ctx.stroke();
+            });
+
+            document.addEventListener('mouseup', () => { isMazeDrawing = false; });
+
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isMazeDrawing = true;
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                ctx.beginPath();
+                ctx.moveTo((touch.clientX - rect.left) * scaleX, (touch.clientY - rect.top) * scaleY);
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!isMazeDrawing) return;
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#8b0000';
+                ctx.lineCap = 'round';
+                ctx.lineTo((touch.clientX - rect.left) * scaleX, (touch.clientY - rect.top) * scaleY);
+                ctx.stroke();
+            });
+
+            canvas.addEventListener('touchend', () => { isMazeDrawing = false; });
+        }
+
+        function drawMaze() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (mazeImg.complete && mazeImg.naturalWidth !== 0) {
+                ctx.drawImage(mazeImg, 0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function clearMaze() {
+            drawMaze();
+        }
+
+        function revealMazeSolution() {
+            drawMaze();
+            ctx.strokeStyle = '#8b0000';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+
+            // Correct Path connecting Entrada A to Exit C
+            const pathPoints = [
+                {x: 105, y: 55}, {x: 130, y: 55}, {x: 130, y: 110}, {x: 155, y: 110},
+                {x: 155, y: 70}, {x: 195, y: 70}, {x: 195, y: 120}, {x: 235, y: 120},
+                {x: 235, y: 180}, {x: 215, y: 180}, {x: 215, y: 220}, {x: 250, y: 220},
+                {x: 250, y: 245}, {x: 210, y: 245}, {x: 210, y: 275}, {x: 150, y: 275}
+            ];
+
+            pathPoints.forEach((pt, idx) => {
+                if (idx === 0) ctx.moveTo(pt.x, pt.y);
+                else ctx.lineTo(pt.x, pt.y);
+            });
+
+            ctx.stroke();
+        }
+
+        function toggleStereogram(btn) {
+            const ans = document.getElementById('stereogramAnswer');
+            ans.classList.toggle('hidden');
+        }
+
+        function checkAllAnswers() {
+            alert("¡Excelente trabajo! Has completado y verificado tus respuestas del periódico del amor.");
+        }
+
+        function resetAll() {
+            if (confirm("¿Deseas reiniciar todas las respuestas y juegos?")) {
+                location.reload();
+            }
+        }
+
+        window.onload = function() {
+            initCrossword();
+            initWordSearch();
+            initSudoku();
+            initHeartMaze();
+        };
+    </script>
+</body>
+</html>
